@@ -8,7 +8,7 @@ One Org file builds the whole machine.
 
 - AMD Renoir + NVIDIA RTX 2060 Mobile — hybrid — `amdgpu` + `nvidia` — both visible
 - 1920x1080@144Hz laptop + Samsung 32"@60Hz right — Mirror Off — XFCE + LightDM + X11 + LUKS
-- Emacs 31.1 + gruber-darker + The Perfect Setup — Scheme 80.1% / Elisp 13.1% / Shell 6.8%
+- Emacs 31.1 + wheatgrass + The Perfect Setup — Scheme 80.1% / Elisp 13.1% / Shell 6.8%
 - Prompt `u@h w λ` — Menu key 135 → `Greek_lambda` — gammastep `42.015277:-86.505 5500:3500`
 
 ## Source
