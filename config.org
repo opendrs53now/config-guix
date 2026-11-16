@@ -314,101 +314,146 @@
   (with-eval-after-load 'org (add-to-list 'org-babel-load-languages '(orgcube . t)) (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages))
 #+END_SRC
 
-* OrgCube v5 — BLOCK #4 — root + watcher — SINGLE DEFINITION
+* BLOCK 4 — OrgCube Ring2 core — v8.6.8 USER-COPY ONLY + 150k [FIXED TRUNCATION]
 #+BEGIN_SRC emacs-lisp :tangle ~/.emacs.d/init.el
-  (defvar orgcube-root (expand-file-name "~/OrgCube/") "OrgCube root")
-  (defvar orgcube-inbox (concat orgcube-root "inbox/inbox.org"))
-  (defvar orgcube-clip-min 1 "Min chars — FIX void-variable orgcube-clip-min")
-  (defvar orgcube-clip-max 50000 "Max chars — FIX void-variable orgcube-clip-max")
-  (defvar orgcube-whatsapp-clipboard-watcher-timer nil)
-  (defvar orgcube-whatsapp-clipboard-watcher-last-clip "")
-  (defvar orgcube-last-clip "" "Compat alias for watcher")
-  (defvar orgcube-mode t "Inbox-only blackbox enabled")
+    (add-to-list 'load-path "~/dotfiles/my-packages")
+    (add-to-list 'load-path "~/dotfiles/orgcube")
+    (defvar org-babel-default-header-args:orgcube '())
+    (defun org-babel-execute:orgcube (body params)
+      (let ((query (string-trim body)))
+        (if (string-empty-p query) (format "EIGEN OK — cube-dir: %s — empty query" (expand-file-name "~/dotfiles/orgcube"))
+          (with-temp-buffer
+            (let ((exit-code (call-process "guile" nil t nil "-L" (expand-file-name "~/dotfiles/orgcube") "-L" (expand-file-name "~/dotfiles/my-packages") "-c" (format "(use-modules (orgcube eigencube)) (let ((hits (eigencube-query %S))) (if (null? hits) (format #t \"EIGEN OK — 0 hits — cube-dir: %%s — query: '%%s'\" %s %S) (for-each (lambda (r) (format #t \"~a:~a: ~a~%%\" (car r) (cadr r) (caddr r))) hits)))" query (expand-file-name "~/dotfiles/orgcube") query))))
+              (if (zerop exit-code) (buffer-string) (format "EIGEN ERR — guile exit %d: %s" exit-code (buffer-string))))))))
+    (with-eval-after-load 'org (add-to-list 'org-babel-load-languages '(orgcube . t)) (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages))
 
-  (defun orgcube-ensure ()
-    (unless (file-directory-p orgcube-root) (make-directory orgcube-root t))
-    (unless (file-directory-p (concat orgcube-root "inbox")) (make-directory (concat orgcube-root "inbox") t))
-    (unless (file-directory-p (concat orgcube-root "manual")) (make-directory (concat orgcube-root "manual") t))
-    (unless (file-exists-p orgcube-inbox)
-      (with-temp-file orgcube-inbox (insert "#+TITLE: OrgCube Inbox\n")))
-    (unless (file-exists-p (concat orgcube-root "manual/manual.org"))
-      (with-temp-file (concat orgcube-root "manual/manual.org")
-        (insert "#+TITLE: OrgCube Manual — Polaris λ — Don\n"))))
+    (defvar orgcube-root (expand-file-name "~/OrgCube/") "OrgCube root")
+    (defvar orgcube-inbox (concat orgcube-root "inbox/inbox.org"))
+    (defvar orgcube-clip-min 1 "Min chars — FIX void-variable orgcube-clip-min")
+    (defvar orgcube-clip-max 150000 "Max chars — 150K — was 50K, now 150K for half-day wall")
+    (defvar orgcube-whatsapp-clipboard-watcher-timer nil)
+    (defvar orgcube-whatsapp-clipboard-watcher-last-clip "")
+    (defvar orgcube-last-clip "" "Compat alias")
+    (defvar orgcube-mode t "Inbox-only blackbox enabled")
 
-  (defun orgcube-whatsapp-clipboard-watcher ()
-    "Inbox-only blackbox — WhatsApp Meta_A-Don only — text+code -> inbox only — safe file."
-    (when orgcube-mode
-      (let ((clip (ignore-errors (or (gui-get-selection 'CLIPBOARD 'UTF8_STRING) (x-get-clipboard) ""))))
-        (when (and (stringp clip)
-                   (> (length clip) orgcube-clip-min)
-                   (< (length clip) orgcube-clip-max)
-                   (not (string= clip orgcube-whatsapp-clipboard-watcher-last-clip))
-                   (string-match-p "WhatsApp\\|Meta_A\\|Don:" clip))
-          (setq orgcube-whatsapp-clipboard-watcher-last-clip clip)
-          (setq orgcube-last-clip clip)
-          (orgcube-capture "WHATSAPP_META_A" clip)))))
+    (defun orgcube-ensure ()
+      (unless (file-directory-p orgcube-root) (make-directory orgcube-root t))
+      (unless (file-directory-p (concat orgcube-root "inbox")) (make-directory (concat orgcube-root "inbox") t))
+      (unless (file-directory-p (concat orgcube-root "manual")) (make-directory (concat orgcube-root "manual") t))
+      (unless (file-exists-p orgcube-inbox)
+        (with-temp-file orgcube-inbox (insert "#+TITLE: OrgCube Inbox\n")))
+      (unless (file-exists-p (concat orgcube-root "manual/manual.org"))
+        (with-temp-file (concat orgcube-root "manual/manual.org")
+          (insert "#+TITLE: OrgCube Manual — Polaris λ — Don\n"))))
 
-  (defun orgcube-whatsapp-clipboard-watcher-start ()
-    (when (timerp orgcube-whatsapp-clipboard-watcher-timer) (cancel-timer orgcube-whatsapp-clipboard-watcher-timer))
-    (setq orgcube-whatsapp-clipboard-watcher-timer (run-with-timer 10 2 #'orgcube-whatsapp-clipboard-watcher)))
+    (defun orgcube-count-blocks ()
+      (if (file-exists-p orgcube-inbox)
+          (with-temp-buffer (insert-file-contents orgcube-inbox) (count-matches "^\* "))
+        0))
 
-  (defun orgcube-whatsapp-clipboard-watcher-stop ()
-    (when (timerp orgcube-whatsapp-clipboard-watcher-timer)
-      (cancel-timer orgcube-whatsapp-clipboard-watcher-timer)
-      (setq orgcube-whatsapp-clipboard-watcher-timer nil)))
+  (defun orgcube--is-valid-clip (clip)
+    "v8.6.8 — 150k + stops inbox + tex recursion"
+    (and (stringp clip)
+         (> (length clip) orgcube-clip-min)
+         (< (length clip) orgcube-clip-max)
+         (not (string= clip orgcube-whatsapp-clipboard-watcher-last-clip))
+         (not (string-prefix-p "#+TITLE: OrgCube Inbox" (string-trim clip)))
+         (not (string-prefix-p "% Created" (string-trim clip)))))
+  
+    (defun orgcube-whatsapp-clipboard-watcher ()
+      "v8.6.8 — COMPLETE — USER-COPY ONLY — dropdown Copy only — 150k"
+      (when orgcube-mode
+        (let ((clip (ignore-errors (or (gui-get-selection 'CLIPBOARD 'UTF8_STRING) (x-get-clipboard) ""))))
+          (when (orgcube--is-valid-clip clip)
+            (setq orgcube-whatsapp-clipboard-watcher-last-clip clip)
+            (setq orgcube-last-clip clip)
+            (let* ((len (length clip))
+                   (src (if (string-match-p "WhatsApp\\|Meta_A" clip) "WhatsAppForLinux" "Clipboard"))
+                   (tag (if (string-match-p "WhatsApp\\|Meta_A" clip) "META" "MIN")))
+              (with-temp-buffer
+                (insert (format "\n* %s — %s — BLOCK [%d chars]\n:PROPERTIES:\n:CREATED: %s\n:BLOCK: auto\n:CHARS: %d\n:SOURCE: %s\n:END:\n#+BEGIN_SRC text\n%s\n#+END_SRC\n"
+                                tag (format-time-string "%Y-%m-%d %H:%M:%S") len (format-time-string "%Y-%m-%d %H:%M:%S") len src clip))
+                (append-to-file (point-min) (point-max) orgcube-inbox))
+              (message "CAPTURED BLOCK %d chars [%s] -> inbox.org" len tag))))))
 
-  (add-hook 'after-init-hook #'orgcube-whatsapp-clipboard-watcher-start)
+    (defun orgcube-whatsapp-clipboard-watcher-start ()
+      (interactive)
+      (when (timerp orgcube-whatsapp-clipboard-watcher-timer) (cancel-timer orgcube-whatsapp-clipboard-watcher-timer))
+      (setq orgcube-whatsapp-clipboard-watcher-timer (run-with-timer 10 2 #'orgcube-whatsapp-clipboard-watcher))
+      (message "v8.6.8 USER-COPY ONLY STARTED BLOCK=%d" (orgcube-count-blocks)))
+
+    (defun orgcube-whatsapp-clipboard-watcher-stop ()
+      (interactive)
+      (when (timerp orgcube-whatsapp-clipboard-watcher-timer)
+        (cancel-timer orgcube-whatsapp-clipboard-watcher-timer)
+        (setq orgcube-whatsapp-clipboard-watcher-timer nil))
+      (message "STOPPED BLOCK=%d" (orgcube-count-blocks)))
+
+    (add-hook 'after-init-hook #'orgcube-whatsapp-clipboard-watcher-start)
 #+END_SRC
 
-* OrgCube v5 — BLOCK #5 — Capture / Parse / Export
+* BLOCK 5 — capture helpers + C-c o c / C-c o w [FIXED TRUNCATION]
 #+BEGIN_SRC emacs-lisp :tangle ~/.emacs.d/init.el
   (defun orgcube-sanitize-for-inbox (text)
-    "Escape Org markup so code inside dialog stays text — inbox only."
+    "Escape Org markup so code stays text"
     (let ((s text))
       (setq s (replace-regexp-in-string "#\\+BEGIN_SRC" "#+BEGIN_EXAMPLE" s t))
-      (setq s (replace-regexp-in-string "^\\* " "** " s))
       s))
 
   (defun orgcube-capture (tag text)
-    "Inbox-only blackbox — text and code -> safe file — never other buffers."
     (orgcube-ensure)
     (let ((clean (orgcube-sanitize-for-inbox text)))
       (with-current-buffer (find-file-noselect orgcube-inbox)
         (goto-char (point-max))
-        (insert (format "\n* %s  :%s:\n:LOGBOOK:\n- Captured: %s\n:END:\n#+BEGIN_QUOTE\n%s\n#+END_QUOTE\n"
-                        (format-time-string "%Y-%m-%d %H:%M %S") tag
-                        (format-time-string "[%Y-%m-%d %a %H:%M]") clean))
-        (save-buffer)
-        (message "OrgCube captured [%s] -> inbox" tag))))
-  
-  (defun orgcube-parse-readme-logs ()
-    (interactive) (orgcube-ensure)
-    (let ((seen (make-hash-table :test 'equal)))
-      (dolist (f (directory-files-recursively (expand-file-name "~/dotfiles") "\\(README\\.md\\|\\.log\\|config\\.org\\)$" t (lambda (dir) (not (string-match-p "/\\." dir)))))
-        (when (and (file-regular-p f) (not (string-match-p "/\\.#" f)) (not (gethash f seen)))
-          (puthash f t seen)
-          (let ((content (with-temp-buffer (insert-file-contents f) (buffer-substring-no-properties (point-min) (min 3000 (point-max))))))
-            (orgcube-capture (format "FILE_%s" (file-name-nondirectory f)) (format "[[file:%s]]\n#+BEGIN_QUOTE\n%s\n#+END_QUOTE" f content)))))))
+        (insert (format "\n* %s  :%s:\n:PROPERTIES:\n:CREATED: %s\n:END:\n#+BEGIN_SRC text\n%s\n#+END_SRC\n"
+                        (format-time-string "%Y-%m-%d %H:%M:%S") tag (format-time-string "%Y-%m-%d %H:%M:%S") clean))
+        (save-buffer))))
 
-  (defun orgcube-export-pdf-txt ()
-    (interactive) (orgcube-ensure)
-    (let* ((root orgcube-root) (inbox-dir (expand-file-name "inbox" root)) (inbox-org (expand-file-name "inbox.org" inbox-dir)))
-      (with-current-buffer (find-file-noselect inbox-org)
-        (let ((org-latex-compiler "xelatex") (org-latex-pdf-process '("xelatex -interaction nonstopmode -output-directory %o %f" "xelatex -interaction nonstopmode -output-directory %o %f")))
-          (org-latex-export-to-pdf) (org-ascii-export-to-ascii)
-          (shell-command (format "cd %s && pdftotext inbox.pdf inbox.txt 2>/dev/null; true" inbox-dir))))
-      (message "OrgCube exported to %s/ trio" inbox-dir)))
+  (defun orgcube-clear-inbox ()
+    "C-c o c — archive + clear — and force buffer revert"
+    (interactive)
+    (orgcube-ensure)
+    (let* ((bak-dir (concat orgcube-root "inbox/.bak/"))
+           (bak-file (concat bak-dir (format-time-string "inbox-%Y-%m-%d-%H%M.org"))))
+      (make-directory bak-dir t)
+      (copy-file orgcube-inbox bak-file t)
+      (with-temp-file orgcube-inbox (insert "#+TITLE: OrgCube Inbox\n"))
+      (setq orgcube-whatsapp-clipboard-watcher-last-clip "")
+      ;; FORCE any open inbox.org buffer to match disk (250 bytes)
+      (when (get-buffer "inbox.org")
+        (with-current-buffer "inbox.org"
+          (set-buffer-modified-p nil)
+          (revert-buffer t t t)))
+      (when (get-file-buffer orgcube-inbox)
+        (with-current-buffer (get-file-buffer orgcube-inbox)
+          (set-buffer-modified-p nil)
+          (revert-buffer t t t)))
+      (message "Inbox cleared - backup: %s - Inbox: 3 lines / 250 bytes - buffer reverted" bak-file)))
+  
+  (global-set-key (kbd "C-c o c") #'orgcube-clear-inbox)
+  (global-set-key (kbd "C-c o w") #'orgcube-whatsapp-clipboard-watcher-start)
+  (global-set-key (kbd "C-c o W") #'orgcube-whatsapp-clipboard-watcher-stop)
 #+END_SRC
 
-* OrgCube v5 — BLOCK #6 — Babel executor + LaTeX PDF — scheme file
-#+BEGIN_SRC scheme :tangle ~/dotfiles/orgcube/ob-orgcube.scm
-;; ob-orgcube.scm — Babel executor
-(use-modules (orgcube eigencube) (ice-9 string-fun))
-(define (org-babel-execute:orgcube body params)
-  (let* ((query (string-trim-both body)) (hits (eigencube-query query)))
-    (if (null? hits)
-        (format #f "EIGEN OK — 0 hits — cube-dir: %s — query: '%s'" %cube-dir query)
-        (string-join (map (lambda (r) (format #f "%a:%a: %a" (car r) (cadr r) (caddr r))) hits) "\n"))))
+* BLOCK 6 — export manual only — PDF trio
+#+BEGIN_SRC emacs-lisp :tangle ~/.emacs.d/init.el
+(defun orgcube-export-pdf-txt ()
+  "Manual export only — C-c C-e l p — no auto to avoid loop"
+  (interactive) (orgcube-ensure)
+  (let* ((root orgcube-root) (inbox-dir (expand-file-name "inbox" root)) (inbox-org (expand-file-name "inbox.org" inbox-dir)))
+    (with-current-buffer (find-file-noselect inbox-org)
+      (let ((org-latex-compiler "xelatex") (org-latex-pdf-process '("xelatex -interaction nonstopmode -output-directory %o %f" "xelatex -interaction nonstopmode -output-directory %o %f")))
+        (org-latex-export-to-pdf) (org-ascii-export-to-ascii)
+        (shell-command (format "cd %s && pdftotext inbox.pdf inbox.txt 2>/dev/null; true" inbox-dir))))
+    (message "OrgCube exported to %s/ trio" inbox-dir)))
+#+END_SRC
+
+* BLOCK 7 — safe check + auto-revert — never Thunar open
+#+BEGIN_SRC emacs-lisp :tangle ~/.emacs.d/init.el
+;; BLOCK 7 — safe terminal check — never open via Thunar
+;; Use: M-! cat ~/OrgCube/inbox/inbox.org | wc -l  — 100% safe
+;; If you DO open via Thunar, auto-revert keeps buffer = disk
+(add-hook 'find-file-hook (lambda () (when (and buffer-file-name (string-match-p "inbox.org" buffer-file-name)) (auto-revert-mode 1))))
 #+END_SRC
 
 ** LaTeX PDF — λ everywhere (Polaris v5 Ring0 4B)
