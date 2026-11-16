@@ -1,4 +1,4 @@
-# guix-config — Polaris v6
+# guix-config — Polaris v8.6.8
 
 `~/dotfiles` for `don@polaris` — Tuxedo Polaris 17 — Stevensville, MI — GNU Guix System — Emacs 31.1.
 
@@ -17,7 +17,7 @@ One Org file builds the whole machine.
 
 - `config.scm` — System
 - `home.scm` — Home — SSH agent `/run/user/1000/ssh-agent/socket` — GitHub `id_ed25519_github` — Brave Flatpak
-- `~/.emacs.d/init.el` — 6273 bytes — symlinks `~/.config/emacs/init.el` and `~/dotfiles/init.el` → one file
+- `~/.emacs.d/init.el` — symlinks `~/.config/emacs/init.el` and `~/dotfiles/init.el` → one file
 
 Edit `config.org` → `C-c C-v t` → `sudo guix system reconfigure` + `guix home reconfigure` → `git diff` clean.
 
@@ -25,10 +25,23 @@ Edit `config.org` → `C-c C-v t` → `sudo guix system reconfigure` + `guix hom
 
 **Sees.** Dual monitors declared in System, no xrandr scripts.
 
-**Remembers.** OrgCube v6 2026-11-05 — now 100% functional:
-- `C-c o p` → `~/OrgCube/inbox.org`
+**Remembers.** OrgCube is Emacs extensibility and a new home for AI. It turns Emacs into the durable layer for AI tutorials, notes, and chat capture.
+
+OrgCube v6 2026-11-05 → v8.6.8 2026-11-16 — 100% functional + restored + enhanced:
+
+- `C-c o p` → `~/OrgCube/inbox/inbox.org` — inbox lives at root for prototype
 - `C-c o e` → xelatex DejaVu → `PDF file produced.` clean — keeps inbox at root, moves pdf/tex/txt to `exports/`
-- Fixed today: lexical-binding col0, mv bug, Xmodmap load-file → shell-command, ox-latex truncation
+- **Automating copy/paste for chatbox capture prototype — USER-COPY ONLY:**
+    - `C-c o w` → START blackbox — `(interactive)` — 0.5s delay / 1s repeat
+    - `C-c o W` → STOP blackbox — split from w, fixes `STARTED BLOCK=2` toggle bug
+    - Captures every user COPY to `~/OrgCube/inbox/inbox.org` — 2082 lines → 12 lines / 250 bytes verified
+    - Works with WhatsApp For Linux dropdown Copy — PRIMARY + CLIPBOARD + last-clip dedup
+    - 150k cap prevents inbox-into-inbox flood
+    - Guards: blocks `#+TITLE: OrgCube Inbox` and `% Created (% inbox.tex)` latex recursion
+    - Fix: stale-buffer after `C-c o c` — now forces `revert-buffer` so disk == buffer
+- Fixed in v6: lexical-binding col0, mv bug, Xmodmap load-file → shell-command, ox-latex truncation
+- Fixed in v8.6.8: backups in `~/OrgCube/inbox/.bak/` — 139k / 127k verified — copied to `/home/don/AI_tutorials_text/Building_OrgCube/` then rm -rf .bak to keep tidy for future work
+- Exports: `pandoc file.org -o file.pdf` + `chmod 444 *.pdf` → readable but not writable — opens in okular / evince — `*.org` stays 644 editable in Emacs
 
 **Breathes.** `eye-relief.sh` gammastep — `flatpak/sync.sh` 10 apps — fixes `WEBKIT_DISABLE_DMABUF_RENDERER=1`.
 
@@ -41,10 +54,10 @@ Edit `config.org` → `C-c C-v t` → `sudo guix system reconfigure` + `guix hom
 - `eigencube/` — v9 final `live.scm`
 - `pong/` — v1 — eigencube v8.5.1 + raylib 5.5 + Guile — no submodules
 
-OS here. Games next door.
+OS here. Games next door. AI tutorials in `AI_tutorials_text/Building_OrgCube/` — pdf 444 readable.
 
 ## Layout
 
-`config.org` → `config.scm` / `home.scm` / `init.el` + `channels.scm` + `my-packages/` + `orgcube/` + `Xmodmap` + `flatpak/`
+`config.org` → `config.scm` / `home.scm` / `init.el` + `channels.scm` + `my-packages/` + `orgcube/` + `Xmodmap` + `flatpak/` + `AI_tutorials_text/Building_OrgCube/`
 
-69 commits — Pure Single Source — Updated 2026-11-05 — GPL-3.0
+71 commits — Pure Single Source — Updated 2026-11-16 — v8.6.8 USER-COPY ONLY — GPL-3.0
