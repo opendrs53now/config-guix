@@ -1,6 +1,6 @@
-# guix-config — Polaris v8.6.8
+# guix-config — Polaris v9
 
-`~/dotfiles` for `don@polaris` — Tuxedo Polaris 17 — Stevensville, MI — GNU Guix System — Emacs 31.1.
+`~/dotfiles/config-guix` for `don@polaris` — Tuxedo Polaris 17 — Stevensville, MI — GNU Guix System — Emacs 31.1.
 
 One Org file builds the whole machine.
 
@@ -17,9 +17,11 @@ One Org file builds the whole machine.
 
 - `config.scm` — System
 - `home.scm` — Home — SSH agent `/run/user/1000/ssh-agent/socket` — GitHub `id_ed25519_github` — Brave Flatpak
-- `~/.emacs.d/init.el` — symlinks `~/.config/emacs/init.el` and `~/dotfiles/init.el` → one file
+- `init.el` — Emacs — Guix `home-files-service-type` `local-file "init.el"` → `~/.emacs.d/init.el` → `/gnu/store/...-init.el`
 
-Edit `config.org` → `C-c C-v t` → `sudo guix system reconfigure` + `guix home reconfigure` → `git diff` clean.
+Edit `config.org` → `C-c C-v t` → `sudo guix system reconfigure` + `guix home reconfigure` → `cd ~/dotfiles/config-guix` → `git diff` clean.
+
+Note: Emacs reads the store copy. Tangle alone is not enough — you must reconfigure for Emacs to see it.
 
 ## Does
 
@@ -27,7 +29,7 @@ Edit `config.org` → `C-c C-v t` → `sudo guix system reconfigure` + `guix hom
 
 **Remembers.** OrgCube is Emacs extensibility and a new home for AI. It turns Emacs into the durable layer for AI tutorials, notes, and chat capture.
 
-OrgCube v6 2026-11-05 → v8.6.8 2026-11-16 — 100% functional + restored + enhanced:
+OrgCube v6 2026-11-05 → v9 2026-11-19 — 100% functional + restored + enhanced:
 
 - `C-c o p` → `~/OrgCube/inbox/inbox.org` — inbox lives at root for prototype
 - `C-c o e` → xelatex DejaVu → `PDF file produced.` clean — keeps inbox at root, moves pdf/tex/txt to `exports/`
@@ -60,4 +62,6 @@ OS here. Games next door. AI tutorials in `AI_tutorials_text/Building_OrgCube/` 
 
 `config.org` → `config.scm` / `home.scm` / `init.el` + `channels.scm` + `my-packages/` + `orgcube/` + `Xmodmap` + `flatpak/` + `AI_tutorials_text/Building_OrgCube/`
 
-71 commits — Pure Single Source — Updated 2026-11-16 — v8.6.8 USER-COPY ONLY — GPL-3.0
+Git repo is `~/dotfiles/config-guix/` — not `~/dotfiles/`.
+
+76 commits — Pure Single Source — Updated 2026-11-19 — v9 Guix owns init.el — GPL-3.0
