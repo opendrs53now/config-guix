@@ -1,4 +1,4 @@
-(add-to-load-path (string-append (getenv "HOME") "/dotfiles/my-packages"))
+(add-to-load-path (string-append (getenv "HOME") "/dotfiles/config-guix/my-packages"))
     (use-modules (gnu home)
                  (gnu home services)
                  (gnu home services shells)
@@ -8,7 +8,7 @@
                  (nongnu packages nvidia)
                  (guix gexp)
                  (raylib-guile))
-    (define %private-dir (string-append (getenv "HOME") "/dotfiles-private"))
+    (define %private-dir (string-append (getenv "HOME") "/dotfiles/guix-private"))
     (define %private-file (string-append %private-dir "/private.scm"))
     (when (file-exists? %private-dir)
       (add-to-load-path %private-dir))
@@ -40,6 +40,8 @@
         (service home-files-service-type
          `((".Xmodmap"
             ,(plain-file "Xmodmap" "keycode 135 = Greek_lambda U03BB\n"))
+           (".emacs.d/init.el"
+            ,(local-file "init.el"))
            (".config/eye-relief.sh"
             ,(plain-file "eye-relief.sh" "#!/bin/sh
   if [ -n \"$DISPLAY\" ]; then
