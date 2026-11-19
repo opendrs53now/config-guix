@@ -4,8 +4,8 @@
 #+LATEX_HEADER: \usepackage{fontspec}
 #+LATEX_HEADER: \usepackage{xunicode}
 #+LATEX_HEADER: \setmonofont{DejaVu Sans Mono}
-;; 2026-10-19 - Polaris v5 - Pure Single Source - Ring0 3B+4B merged
-#+TITLE: Don's Tuxedo - Polaris - Hybrid Guix System + Home + Emacs - Single Source of Truth
+;; 2026-11-18 - config.org v9 - Single Source - Ring0 3B+4B merged
+#+TITLE: Don's Tuxedo - Polaris - Hybrid Guix System + Home + Emacs - config.org v9 - Single Source of Truth
 #+PROPERTY: header-args: :tangle config.scm
 
 * System -Tuxedo Polaris - Hybrid Guix System - X11 + XFCE + Lightdm

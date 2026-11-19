@@ -64,4 +64,4 @@ OS here. Games next door. AI tutorials in `AI_tutorials_text/Building_OrgCube/` 
 
 Git repo is `~/dotfiles/config-guix/` — not `~/dotfiles/`.
 
-76 commits — Pure Single Source — Updated 2026-11-19 — v9 Guix owns init.el — GPL-3.0
+77 commits — config.org Single Source of Truth — Updated 2026-11-19 — v9 Guix owns init.el — GPL-3.0
