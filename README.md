@@ -1,8 +1,12 @@
-# guix-config — Polaris v9
+# config-guix — Polaris v9
 
 `~/dotfiles/config-guix` for `don@polaris` — Tuxedo Polaris 17 — Stevensville, MI — GNU Guix System — Emacs 31.1.
 
 One Org file builds the whole machine.
+
+Repo: `github.com/opendrs53now/config-guix`
+Local: `~/dotfiles/config-guix/` — not `~/dotfiles/`
+Former name: `guix-config` — renamed to `config-guix` to match the folder.
 
 ## Machine
 
@@ -23,24 +27,35 @@ Edit `config.org` → `C-c C-v t` → `sudo guix system reconfigure` + `guix hom
 
 Note: Emacs reads the store copy. Tangle alone is not enough — you must reconfigure for Emacs to see it.
 
+Current sync — Nov 25, 2026:
+- `79be54b` — `config.org: sync Blocks 1-10 + OrgCube Menu box`
+- `4c047ea` — `config.scm + init.el: tangle from config.org 79be54b`
+- Blocks 1-10 held in `config.org`: System, Home, Emacs, OrgCube Ring2 core, capture helpers, export manual only, safe check + auto-revert, OrgCube keys, boring global holder, OrgCube Menu box
+
 ## Does
 
 **Sees.** Dual monitors declared in System, no xrandr scripts.
 
 **Remembers.** OrgCube is Emacs extensibility and a new home for AI. It turns Emacs into the durable layer for AI tutorials, notes, and chat capture.
 
-OrgCube v6 2026-11-05 → v9 2026-11-19 — 100% functional + restored + enhanced:
+OrgCube v6 2026-11-05 → v9 2026-11-19 → Blocks 1-10 sync 2026-11-25 — 100% functional + restored + enhanced:
 
 - `C-c o p` → `~/OrgCube/inbox/inbox.org` — inbox lives at root for prototype
+- `C-c o c` → clear inbox
+- `C-c o m` → OrgCube Menu box — Files / Chats placeholder / AI placeholder
+    - In Files box: `l` = load file, `f` = change format, `p` = make PDF
+    - PDF: extarticle 8-20pt, DejaVu, xelatex, strips `#+LATEX_CLASS` / `#+OPTIONS` only, keeps `#+LATEX_HEADER`, wrap vs shrink table-fit, 2x xelatex runs, cleanup to `.org` / `.tex` / `.pdf` only
+    - Emacs makes PDF only. No printing from Emacs.
 - `C-c o e` → xelatex DejaVu → `PDF file produced.` clean — keeps inbox at root, moves pdf/tex/txt to `exports/`
 - **Automating copy/paste for chatbox capture prototype — USER-COPY ONLY:**
-    - `C-c o w` → START blackbox — `(interactive)` — 0.5s delay / 1s repeat
-    - `C-c o W` → STOP blackbox — split from w, fixes `STARTED BLOCK=2` toggle bug
-    - Captures every user COPY to `~/OrgCube/inbox/inbox.org` — 2082 lines → 12 lines / 250 bytes verified
-    - Works with WhatsApp For Linux dropdown Copy — PRIMARY + CLIPBOARD + last-clip dedup
-    - 150k cap prevents inbox-into-inbox flood
-    - Guards: blocks `#+TITLE: OrgCube Inbox` and `% Created (% inbox.tex)` latex recursion
-    - Fix: stale-buffer after `C-c o c` — now forces `revert-buffer` so disk == buffer
+        - `C-c o w` → START watcher box — `(interactive)` — 0.5s delay / 1s repeat
+        - `C-c o W` → STOP watcher box — split from w, fixes `STARTED BLOCK=2` toggle bug
+        - No auto-start. Box is created on first manual `C-c o w`.
+        - Captures every user COPY to `~/OrgCube/inbox/inbox.org` — 2082 lines → 12 lines / 250 bytes verified
+        - Works with WhatsApp For Linux dropdown Copy — PRIMARY + CLIPBOARD + last-clip dedup
+        - 150k cap prevents inbox-into-inbox flood
+        - Guards: blocks `#+TITLE: OrgCube Inbox` and `% Created (% inbox.tex)` latex recursion
+        - Fix: stale-buffer after `C-c o c` — now forces `revert-buffer` so disk == buffer
 - Fixed in v6: lexical-binding col0, mv bug, Xmodmap load-file → shell-command, ox-latex truncation
 - Fixed in v8.6.8: backups in `~/OrgCube/inbox/.bak/` — 139k / 127k verified — copied to `/home/don/AI_tutorials_text/Building_OrgCube/` then rm -rf .bak to keep tidy for future work
 - Exports: `pandoc file.org -o file.pdf` + `chmod 444 *.pdf` → readable but not writable — opens in okular / evince — `*.org` stays 644 editable in Emacs
@@ -64,4 +79,4 @@ OS here. Games next door. AI tutorials in `AI_tutorials_text/Building_OrgCube/` 
 
 Git repo is `~/dotfiles/config-guix/` — not `~/dotfiles/`.
 
-77 commits — config.org Single Source of Truth — Updated 2026-11-19 — v9 Guix owns init.el — GPL-3.0
+config.org Single Source of Truth — Updated 2026-11-25 — v9 Guix owns init.el — GPL-3.
