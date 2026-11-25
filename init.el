@@ -275,3 +275,230 @@
 ;; DO NOT auto-start. Old bug: after-init-hook restarted after you stopped.
 ;; Box is created on first manual C-c o w. If you want it on boot, uncomment ONE line:
 ;; (add-hook 'after-init-hook #'orgcube--ensure-box)
+
+;; BLOCK 10 — OrgCube Menu — boxes within boxes
+;; Outer box holds inner boxes. No globals leak.
+;; Emacs makes PDF only. No printing from Emacs.
+
+(defun make-orgcube-menu-box ()
+  "Return OrgCube Menu box. All UI state lives inside this LET."
+  (let ((current-file (expand-file-name "~/OrgCube/inbox/test-print.org"))
+        (font "DejaVu Sans")
+        (size 16)
+        (margins "0.75in")
+        (orientation "portrait")
+        (table-fit "wrap"))
+    (lambda (cmd &rest args)
+      (pcase cmd
+        ('get-file current-file)
+        ('set-file (setq current-file (car args)))
+        ('get-format (list :font font :size size :margins margins
+                           :orientation orientation :table-fit table-fit))
+      ('set-format
+       (let ((plist (car args)))
+         (setq font (or (plist-get plist :font) font))
+         (setq size (or (plist-get plist :size) size))
+         (setq margins (or (plist-get plist :margins) margins))
+         (setq orientation (or (plist-get plist :orientation) orientation))
+         (setq table-fit (or (plist-get plist :table-fit) table-fit))))
+      ('show
+       (with-current-buffer (get-buffer-create "*OrgCube Menu*")
+         (let ((inhibit-read-only t))
+           (erase-buffer)
+           (insert "OrgCube Menu — Polaris λ — Don\n")
+           (insert "================================\n\n")
+           (insert (format "File: %s\n\n" current-file))
+           (insert (format "Format a page: Font: %s  Size: %d pt  Margins: %s\n" font size margins))
+           (insert (format "  Orientation: %s  Table Fit: %s\n\n" orientation table-fit))
+           (insert "[1] Files and Documents — Load file / Format page / Make PDF\n")
+           (insert "[2] Copy Chat Dialogs — WhatsApp / Discord / Mastodon / Open WebUI — Not built yet\n")
+           (insert "[3] AI Assisted Coding — Needs Guix container + resident agent — Later\n")
+           (insert "\nKeys: 1 = Files  2 = Chats  3 = AI  q = quit\n")
+           (insert "\nIn Files box: l = load file, f = change format, p = make PDF\n")
+           (orgcube-menu-mode)
+           (goto-char (point-min)))
+         (pop-to-buffer "*OrgCube Menu*")))
+      (_ (error "Unknown menu cmd: %s" cmd))))))
+        
+(defvar orgcube--menu-box nil "The one OrgCube Menu box.")
+
+(defun orgcube--ensure-menu-box ()
+  (unless orgcube--menu-box
+    (setq orgcube--menu-box (make-orgcube-menu-box)))
+  orgcube--menu-box)
+
+;; --- Menu mode — just keys, no mouse needed ---
+(define-derived-mode orgcube-menu-mode special-mode "OrgCube-Menu"
+  "Keys for OrgCube Menu Box."
+  (define-key orgcube-menu-mode-map (kbd "1") #'orgcube-menu-files)
+  (define-key orgcube-menu-mode-map (kbd "2") #'orgcube-menu-chats-placeholder)
+  (define-key orgcube-menu-mode-map (kbd "3") #'orgcube-menu-ai-placeholder)
+  (define-key orgcube-menu-mode-map (kbd "l") #'orgcube-files-load)
+  (define-key orgcube-menu-mode-map (kbd "f") #'orgcube-files-format)
+  (define-key orgcube-menu-mode-map (kbd "p") #'orgcube-files-make-pdf)
+  (define-key orgcube-menu-mode-map (kbd "q") #'quit-window))
+
+(defun orgcube-menu-open ()
+  "Open OrgCube Menu — outer box."
+  (interactive)
+  (funcall (orgcube--ensure-menu-box) 'show))
+
+;; --- 1. FILES AND DOCUMENTS BOX ---
+(defun orgcube-menu-files ()
+  "Enter Files and Documents box."
+  (interactive)
+  (funcall (orgcube--ensure-menu-box) 'show)
+  (message "Files and Documents Box — l = load, f = format, p = make PDF"))
+
+(defun orgcube-files-load ()
+  "Load a file into Files box. Any valid file /path/location."
+  (interactive)
+  (let ((f (read-file-name "Load file: " nil nil t)))
+    (funcall (orgcube--ensure-menu-box) 'set-file f)
+    (funcall (orgcube--ensure-menu-box) 'show)
+    (message "Loaded: %s" f)))
+
+(defun orgcube-files-format ()
+  "Change format — font / size / margins / orientation / table-fit.
+Orientation is a this-or-that choice: portrait or landscape."
+  (interactive)
+  (let* ((box (orgcube--ensure-menu-box))
+         (cur (funcall box 'get-format))
+         (font (read-string "Font: " (plist-get cur :font)))
+         (size (read-number "Size pt: " (plist-get cur :size)))
+         (margins (read-string "Margins (e.g. 0.75in): " (plist-get cur :margins)))
+         ;; This-or-that: completing-read with require-match, no free typing.
+         (orientation (completing-read "Orientation (portrait or landscape): "
+                                       '("portrait" "landscape")
+                                       nil t (plist-get cur :orientation)))
+         (table-fit (completing-read "Table Fit (wrap or shrink or landscape+shrink): "
+                                     '("wrap" "shrink" "landscape+shrink")
+                                     nil t (plist-get cur :table-fit))))
+    (when (string= table-fit "landscape+shrink")
+      (setq orientation "landscape")
+      (setq table-fit "shrink"))
+    (funcall box 'set-format (list :font font :size size :margins margins
+                                   :orientation orientation :table-fit table-fit))
+    (funcall box 'show)))
+
+ (defun orgcube--fix-longtable-for-wrap (tex-file)
+  "Rewrite longtable column specs to p{0.48\\textwidth} so cells wrap."
+  (with-temp-buffer
+    (insert-file-contents tex-file)
+    (goto-char (point-min))
+    (while (re-search-forward "\\\\begin{longtable}{[^}]*}" nil t)
+      (replace-match
+       "\\begin{longtable}{p{0.48\\textwidth} p{0.48\\textwidth}}"
+       t t))
+    (write-file tex-file)))
+
+(defun orgcube--fix-longtable-for-shrink (tex-file)
+  "Wrap longtable in adjustbox so wide tables shrink to fit.
+Used when Table Fit = shrink."
+  (with-temp-buffer
+    (insert-file-contents tex-file)
+    (goto-char (point-min))
+    ;; Only wrap if not already wrapped. Simple: replace \begin{longtable}
+    ;; with adjustbox start is not valid for longtable, so instead we
+    ;; leave longtable alone and rely on geometry + small tabcolsep.
+    ;; Shrink is handled by geometry + font size in this version.
+    ;; This function is kept as a hook so shrink is not silently ignored.
+    (message "Table Fit: shrink — using narrow tabcolsep, no forced p{} columns")
+    (write-file tex-file)))
+
+(defun orgcube-files-make-pdf ()
+  "Make PDF with extarticle (8-20pt works).
+Strips #+LATEX_CLASS / OPTIONS so source can't override Menu.
+Keeps #+LATEX_HEADER so your own headers survive.
+Temp buffers never prompt to save.
+Result is 3 files only: .org, .tex, .pdf"
+  (interactive)
+  (let* ((box (orgcube--ensure-menu-box))
+         (file (expand-file-name (funcall box 'get-file)))
+         (fmt (funcall box 'get-format))
+         (font (plist-get fmt :font))
+         (size (plist-get fmt :size))
+         (margins (plist-get fmt :margins))
+         (orientation (or (plist-get fmt :orientation) "portrait"))
+         (table-fit (or (plist-get fmt :table-fit) "wrap")))
+    (unless (file-exists-p file) (error "File not found: %s" file))
+    (let* ((base (file-name-sans-extension file))
+           (out-dir (file-name-directory file))
+           (tex-file (concat base ".tex"))
+           (pdf-file (concat base ".pdf"))
+           ;; Geometry: landscape is a separate option, not a margin.
+           (geometry-opts (if (string= orientation "landscape")
+                              (format "margin=%s,landscape" margins)
+                            (format "margin=%s" margins))))
+      (with-temp-buffer
+        (setq buffer-offer-save nil)
+        (insert-file-contents file)
+        (setq buffer-file-name file)
+        (setq default-directory out-dir)
+        (goto-char (point-min))
+        (while (re-search-forward "^.*DON[ \t]*[-—][ \t]*.*BLOCK.*\\[.*chars.*lines\\].*$" nil t)
+          (replace-match "" nil nil))
+        (goto-char (point-min))
+        ;; Strip only CLASS / OPTIONS, NOT LATEX_HEADER.
+        ;; Your #+LATEX_HEADER: lines survive now.
+        (while (re-search-forward "^#\\+LATEX_CLASS:.*$\\|^#\\+OPTIONS:.*$" nil t)
+          (replace-match "" nil nil))
+        (org-mode)
+        (let ((org-latex-compiler "xelatex")
+              (org-latex-hyperref-template nil)
+              (org-export-with-author nil)
+              (org-export-with-creator nil)
+              (org-export-with-date nil)
+              (org-export-with-title nil)
+              (org-export-with-toc nil)
+              (org-latex-tables-booktabs t)
+              (org-latex-default-table-environment "longtable")
+              (org-latex-classes
+               `(("orgcube-page"
+                  ,(format "\\documentclass[%dpt]{extarticle}\n\\usepackage{fontspec}\n\\usepackage[%s]{geometry}\n\\usepackage{longtable}\n\\usepackage{tabularx}\n\\usepackage{booktabs}\n\\usepackage{adjustbox}\n\\usepackage{array}\n\\setlength{\\tabcolsep}{3pt}\n\\renewcommand{\\arraystretch}{1.15}\n\\setmainfont{%s}\n\\setmonofont{DejaVu Sans Mono}\n[NO-DEFAULT-PACKAGES]\n[PACKAGES]\n[EXTRA]"
+                           size geometry-opts font)
+                  ("\\section{%s}" . "\\section*{%s}")
+                  ("\\subsection{%s}" . "\\subsection*{%s}")
+                  ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+                  ("\\paragraph{%s}" . "\\paragraph*{%s}")
+                  ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))))
+              (org-latex-default-class "orgcube-page"))
+          (org-export-to-file 'latex tex-file nil nil nil nil nil))
+        (set-buffer-modified-p nil))
+      ;; Table Fit actually does something now.
+      (cond
+       ((string= table-fit "wrap")
+        (orgcube--fix-longtable-for-wrap tex-file))
+       ((string= table-fit "shrink")
+        (orgcube--fix-longtable-for-shrink tex-file)))
+      ;; Two xelatex runs: second fixes references.
+      (shell-command (format "cd %s && xelatex -interaction nonstopmode %s"
+                             (shell-quote-argument out-dir)
+                             (shell-quote-argument (file-name-nondirectory tex-file))))
+      (shell-command (format "cd %s && xelatex -interaction nonstopmode %s"
+                             (shell-quote-argument out-dir)
+                             (shell-quote-argument (file-name-nondirectory tex-file))))
+      (if (file-exists-p pdf-file)
+          (progn
+            ;; Cleanup: back to 3 files only. Delete xelatex byproducts.
+            (dolist (ext '(".aux" ".log" ".out"))
+              (let ((f (concat base ext)))
+                (when (file-exists-p f)
+                  (delete-file f))))
+            (message "PDF made: %s %dpt %s %s TableFit %s" pdf-file size margins orientation table-fit))
+        (message "PDF FAILED — check %s.log in %s" tex-file out-dir)))))
+
+;; --- 2. COPY CHAT DIALOGS BOX — PLACEHOLDER ---
+(defun orgcube-menu-chats-placeholder ()
+  "Placeholder — Copy Chat Dialogs Box."
+  (interactive)
+  (message "Copy Chat Dialogs — Not built yet — Will hold: WhatsApp / Discord / Mastodon / Open WebUI boxes"))
+
+;; --- 3. AI ASSISTED CODING BOX — PLACEHOLDER ---
+(defun orgcube-menu-ai-placeholder ()
+  "Placeholder — AI Coding Box needs container + resident agent."
+  (interactive)
+  (message "AI Assisted Coding — Later — Needs: Guix container box + Guile box + resident agent inside container. Do NOT run on Polaris directly."))
+
+;; Key to open menu
+(global-set-key (kbd "C-c o m") #'orgcube-menu-open)

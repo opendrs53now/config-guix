@@ -35,7 +35,7 @@
   (kernel-arguments '("modprobe.blacklist=nouveau" "nouveau.modeset=0" "nvidia-drm.modeset=1" "acpi_backlight=native"))
   (host-name "polaris")
   (name-service-switch %mdns-host-lookup-nss)
-  (timezone "America/Detroit")
+  (timezone "America/Detroit")Z
   (locale "en_US.utf8")
   (keyboard-layout (keyboard-layout "us"))
   (initrd microcode-initrd)
